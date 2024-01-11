@@ -191,3 +191,14 @@ function kawarimiline#start(opts) abort
     augroup END
   endif
 endfunction
+
+" https://github.com/vim/vim/blob/71d0ba07a33a750e9834cd42b7acc619043dedb1/src/testdir/test_statusline.vim#L18-L20
+" https://github.com/vim/vim/blob/71d0ba07a33a750e9834cd42b7acc619043dedb1/src/testdir/view_util.vim#L19-L36
+function kawarimiline#get_statusline() abort
+  if &laststatus == 0 || (&laststatus == 1 && winnr('$') == 1)
+    return ''
+  endif
+  let lnum = s:statusline_lnum()
+  " redrawstatus!
+  return range(1, &columns)->map($'screenstring({lnum}, v:val)')->join('')
+endfunction
