@@ -179,7 +179,7 @@ function kawarimiline#start(opts) abort
   endfor
 
   augroup kawarimiline_internal
-    autocmd VimResized,WinResized,WinEnter * call timer_start(0, {->s:show_img()})
+    autocmd VimResized,WinResized,WinEnter,BufEnter * call timer_start(0, {->s:show_img()})
   augroup END
 
   if animation
