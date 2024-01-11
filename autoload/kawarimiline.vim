@@ -15,6 +15,8 @@ let s:resources_dir = expand('<sfile>:h:h') .. '/resources'
 let s:is_number = {item->type(item)==v:t_number}
 let s:is_func = {item->type(item)==v:t_func}
 
+let s:statusline_lnum = {->&lines-&cmdheight}
+
 let s:timer_id = 0
 
 " {{{ ring list
@@ -52,6 +54,9 @@ function s:display_sixel(sixel, lnum, cnum) abort
 endfunction
 
 function s:show_animation() abort
+  if screenrow() > s:statusline_lnum()
+    return
+  endif
   call s:main_images.tick()
   call s:trail_images.tick()
   call s:show_img()
@@ -67,7 +72,7 @@ function s:show_img() abort
   let main = s:img_cache[s:main_images.current()]
   let trail = s:img_cache[s:trail_images.current()]
 
-  let lnum = &lines-&cmdheight
+  let lnum = s:statusline_lnum()
 
   let left = s:left_margin()
   let right = s:right_margin()
