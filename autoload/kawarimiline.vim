@@ -36,26 +36,15 @@ function s:push(item) abort dict
 endfunction
 " }}}
 
-let s:img_cache = {}
+if !exists('s:img_cache')
+  let s:img_cache = {}
+endif
 let s:MAIN_IMG_WIDTH = 3
 let s:MAIN_IMG_BASE = 'kawarimi'
 let s:TRAIL_IMG_BASE = 'rainbow'
 let s:LEAD_IMG_NAME = 'space'
 
 let s:echoraw = has('nvim') ? {str->chansend(v:stderr, str)} : {str->echoraw(str)}
-
-function s:load_img(name, height) abort
-  if has_key(s:img_cache, a:name)
-    return
-  endif
-  let path = $'{s:resources_dir}/{a:name}.png'
-  let sixel = system($"img2sixel -h {a:height}px {path}")
-  if sixel =~ 'usage' || sixel =~ 'No such file or directory'
-    call s:echoerr($"failed to load: {path}")
-    return
-  endif
-  let s:img_cache[a:name] = sixel
-endfunction
 
 function s:display_sixel(sixel, lnum, cnum) abort
   let [sixel, lnum, cnum] = [a:sixel, a:lnum, a:cnum]
@@ -68,7 +57,7 @@ function s:show_animation() abort
   call s:show_img()
 endfunction
 
-let s:last_offset = []
+let s:last_margin = []
 function s:show_img() abort
   if !s:enable()
     return
@@ -80,19 +69,19 @@ function s:show_img() abort
 
   let lnum = &lines-&cmdheight
 
-  let left = s:left_offset()
-  let right = s:right_offset()
+  let left = s:left_margin()
+  let right = s:right_margin()
   let length = &columns - left - right
-  if length < 0
+  if left < 0 || right < 0 || length < s:MAIN_IMG_WIDTH
     return
   endif
 
-  let offset = [left, right]
-  if s:last_offset != offset
-    if !empty(s:last_offset)
+  let margin = [left, right]
+  if s:last_margin != margin
+    if !empty(s:last_margin)
       execute "normal! \<c-l>"
     endif
-    let s:last_offset = offset
+    let s:last_margin = margin
   endif
 
   " subtract image width from length so as not to jump out of the area
@@ -119,7 +108,7 @@ endfunction
 function kawarimiline#stop() abort
   silent! call timer_stop(s:timer_id)
   execute "normal! \<c-l>"
-  let s:last_offset = []
+  let s:last_margin = []
   augroup kawarimiline_internal
     autocmd!
   augroup END
@@ -130,22 +119,22 @@ function kawarimiline#start(opts) abort
 
   " required
   let size = a:opts.size
-  let s:left_offset = a:opts.left_offset
-  let s:right_offset = a:opts.right_offset
+  let s:left_margin = a:opts.left_margin
+  let s:right_margin = a:opts.right_margin
 
   if !s:is_number(size)
-    call s:echoerr('invalid type: size should be number')
-  elseif !s:is_number(s:left_offset) && !s:is_func(s:left_offset)
-    call s:echoerr('invalid type: left_offset should be number or funcref')
-  elseif !s:is_number(s:right_offset) && !s:is_func(s:right_offset)
-    call s:echoerr('invalid type: right_offset should be number or funcref')
+    return s:echoerr('invalid type: size should be number')
+  elseif !s:is_number(s:left_margin) && !s:is_func(s:left_margin)
+    return s:echoerr('invalid type: left_margin should be number or funcref')
+  elseif !s:is_number(s:right_margin) && !s:is_func(s:right_margin)
+    return s:echoerr('invalid type: right_margin should be number or funcref')
   endif
 
-  if s:is_number(s:left_offset)
-    let s:left_offset = {->a:opts.left_offset}
+  if s:is_number(s:left_margin)
+    let s:left_margin = {->a:opts.left_margin}
   endif
-  if s:is_number(s:right_offset)
-    let s:right_offset = {->a:opts.right_offset}
+  if s:is_number(s:right_margin)
+    let s:right_margin = {->a:opts.right_margin}
   endif
 
   let s:enable = !has_key(a:opts, 'enable') ? {->v:true}
@@ -181,7 +170,7 @@ function kawarimiline#start(opts) abort
   call extend(img_names, s:main_images.items)
   call extend(img_names, s:trail_images.items)
   for name in img_names
-    call s:load_img(name, size)
+    let s:img_cache[name] = system($"img2sixel -h {size}px {s:resources_dir}/{name}.png")
   endfor
 
   augroup kawarimiline_internal
