@@ -16,6 +16,7 @@ let s:is_number = {item->type(item)==v:t_number}
 let s:is_func = {item->type(item)==v:t_func}
 
 let s:statusline_lnum = {->&lines-&cmdheight}
+let s:statusline_hidden = {->&laststatus == 0 || (&laststatus == 1 && winnr('$') == 1)}
 
 let s:timer_id = 0
 
@@ -64,7 +65,7 @@ endfunction
 
 let s:last_margin = []
 function s:show_img() abort
-  if !s:enable()
+  if !s:enable() || s:statusline_hidden()
     return
   endif
 
@@ -199,7 +200,7 @@ endfunction
 " https://github.com/vim/vim/blob/71d0ba07a33a750e9834cd42b7acc619043dedb1/src/testdir/test_statusline.vim#L18-L20
 " https://github.com/vim/vim/blob/71d0ba07a33a750e9834cd42b7acc619043dedb1/src/testdir/view_util.vim#L19-L36
 function kawarimiline#get_statusline() abort
-  if &laststatus == 0 || (&laststatus == 1 && winnr('$') == 1)
+  if s:statusline_hidden()
     return ''
   endif
   let lnum = s:statusline_lnum()
