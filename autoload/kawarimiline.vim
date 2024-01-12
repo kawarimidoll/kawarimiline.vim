@@ -122,7 +122,12 @@ endfunction
 function kawarimiline#start(opts) abort
   call kawarimiline#stop()
 
-  " required
+  if !has_key(a:opts, 'size')
+        \ || !has_key(a:opts, 'left_margin')
+        \ || !has_key(a:opts, 'right_margin')
+    return s:echoerr('lack of option: size, left_margin and right_margin are required')
+  endif
+
   let size = a:opts.size
   let s:left_margin = a:opts.left_margin
   let s:right_margin = a:opts.right_margin
@@ -147,8 +152,7 @@ function kawarimiline#start(opts) abort
         \ : {->a:opts.enable}
 
   let interval = get(a:opts, 'interval', 400)
-
-  let animation = get(a:opts, 'animation', v:false)
+  let use_animation = interval > 0
   let wave = get(a:opts, 'wave', v:false)
 
   let img_names = [s:LEAD_IMG_NAME]
@@ -156,7 +160,7 @@ function kawarimiline#start(opts) abort
   let s:main_images = s:make_ring_list([])
   let s:trail_images = s:make_ring_list([])
 
-  if animation
+  if use_animation
     for i in [1,2,3,4]
       call s:main_images.push($'{s:MAIN_IMG_BASE}{i}')
       if wave
@@ -182,12 +186,12 @@ function kawarimiline#start(opts) abort
     autocmd VimResized,WinResized,WinEnter,BufEnter * call timer_start(0, {->s:show_img()})
   augroup END
 
-  if animation
+  if use_animation
     let s:timer_id = timer_start(interval, {->s:show_animation()}, {'repeat': -1})
   else
     call timer_start(0, {->s:show_img()})
     augroup kawarimiline_internal
-      autocmd CursorMoved * call s:show_img()
+      autocmd CursorMoved * call timer_start(0, {->s:show_img()})
     augroup END
   endif
 endfunction
