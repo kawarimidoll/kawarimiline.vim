@@ -1,0 +1,114 @@
+*kawarimiline.txt* A fancy tiny scroll indicator in Vim 🌈
+
+Author: kawarimidoll
+License: MIT https://github.com/kawarimidoll/kawarimiline.vim/blob/main/LICENSE
+
+==============================================================================
+INTRODUCTION                                       *kawarimiline-introduction*
+
+    *kawarimiline* is a plugin to indicate current scroll position in
+    |statusline|.
+
+REQUIREMENTS                                       *kawarimiline-requirements*
+
+    To use this plugin, `img2sixel` is required.
+    Make sure libsixel (https://github.com/saitoha/libsixel) is installed.
+
+==============================================================================
+INTERFACE                                             *kawarimiline-interface*
+
+------------------------------------------------------------------------------
+FUNCTIONS                                             *kawarimiline-functions*
+
+kawarimiline#start({opts})                              *kawarimiline#start()*
+
+    Start kawarimiline.
+    {opts} is a dictionary with these fields:
+      - size                                          *kawarimiline-opts-size*
+        (REQUIRED)
+        Vertical size of kawarimiline.
+        This should be your terminal's font size plus a little padding.
+        You have to specify this because Vim can't detect it.
+      - left_margin                            *kawarimiline-opts-left_margin*
+        (REQUIRED)
+        Left margin of kawarimiline.
+        |Number| or |Funcref| are supported.
+      - right_margin                          *kawarimiline-opts-right_margin*
+        (REQUIRED)
+        Right margin of kawarimiline.
+        |Number| or |Funcref| are supported.
+      - enable                                      *kawarimiline-opts-enable*
+        (default: v:true)
+        Flag if show kawarimiline.
+        |Boolean| or |Funcref| are supported.
+      - interval                                  *kawarimiline-opts-interval*
+        (default: 400)
+        Wait time (in milliseconds) between each frame.
+        Set this to 0 to stop the animation.
+      - wave                                          *kawarimiline-opts-wave*
+        (default: v:false)
+        Flag if show waving rainbow.
+
+    If you use Funcref to `'enable'`, `'left_margin'` or `'right_margin'`,
+    they will be calculated every redraw.
+    Be careful not to slow down the process and not to cause error.
+
+    example:
+>
+    call kawarimiline#start({
+          \ 'size': 22,
+          \ 'left_margin': {->max([
+          \   stridx(kawarimiline#get_statusline(), '   ') + 2,
+          \   20
+          \ ])},
+          \ 'right_margin': 20,
+          \ 'enable': {->winnr() == winnr('1h') && winnr() == winnr('1l')},
+          \ 'wave': v:true,
+          \ })
+<
+
+kawarimiline#stop()                                      *kawarimiline#stop()*
+
+    Stop and hide kawarimiline.
+
+kawarimiline#get_statusline()                  *kawarimiline#get_statusline()*
+
+    Return current statusline as |String|.
+    It is useful to calculate |kawarimiline-opts-left_margin| or
+    |kawarimiline-opts-right_margin|.
+
+==============================================================================
+FAQ                                                         *kawarimiline-faq*
+
+Image is not displayed~
+
+    This plugin checks whether `img2sixel` can be executed, but it can not
+    confirm whether your terminal supports sixel.
+    Run `img2sixel /path/to/image` and make sure the image is displayed.
+
+    https://github.com/saitoha/libsixel
+
+Image is accidentally hidden~
+
+    When terminal is redrawen, e.g. using |CTRL-L|, the image is hidden.
+    This is limitation of sixel graphic.
+    When the |kawarimiline-opts-interval| elapses (in animation is enabled) or
+    the cursor is moved (in animation is disabled), the image is redisplayed.
+
+    In addition, kawarimiline is not updated in these conditions:
+      - calculated left margin is less than 0
+      - calculated righ margin is less than 0
+      - calculated left margin and right margin are overlapped
+      - cursor is in |cmdline|
+
+Cursor is blinking~
+
+    When animation is enabled, this plugin repeatedly do below:
+      - moves the cursor onto the status line
+      - displays an image at the cursor position
+      - returns cursor to its original position
+
+    This may cause the cursor to blink.
+    It's possibly fixed by adjusting |kawarimiline-opts-interval|.
+
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
