@@ -28,6 +28,10 @@ call kawarimiline#start({
 
 `'size'`, `'left_margin'` and `'right_margin'` are required.
 
+## KNOWN ISSUES
+
+- This may works wrong when `set cmdheight=0` in Neovim.
+
 ## INSPIRED BY
 
 - https://github.com/TeMPOraL/nyan-mode
