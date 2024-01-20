@@ -65,7 +65,7 @@ endfunction
 
 let s:last_margin = []
 function s:show_img() abort
-  if !s:enable() || s:statusline_hidden()
+  if !s:enable() || (s:check_hidden && s:statusline_hidden())
     return
   endif
 
@@ -73,7 +73,7 @@ function s:show_img() abort
   let main = s:img_cache[s:main_images.current()]
   let trail = s:img_cache[s:trail_images.current()]
 
-  let lnum = s:statusline_lnum()
+  let lnum = s:lnum()
 
   let left = s:left_margin()
   let right = s:right_margin()
@@ -151,6 +151,13 @@ function kawarimiline#start(opts) abort
   let s:enable = !has_key(a:opts, 'enable') ? {->v:true}
         \ : s:is_func(a:opts.enable) ? a:opts.enable
         \ : {->a:opts.enable}
+
+  let s:lnum = s:statusline_lnum
+  let s:check_hidden = v:true
+  if has_key(a:opts, 'lnum')
+    let s:lnum = s:is_func(a:opts.lnum) ? a:opts.lnum : {->a:opts.lnum}
+    let s:check_hidden = v:false
+  endif
 
   let interval = get(a:opts, 'interval', 400)
   let use_animation = interval > 0
